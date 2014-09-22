@@ -1060,7 +1060,7 @@ class pyborg:
             cleanbody = " ".join(words)
 
             # Hash collisions we don't care about. 2^32 is big :-)
-            hashval = hash(cleanbody) & (1 << 30)
+            hashval = hash(cleanbody) & ((1 << 30) - 1)
 
             # Check context isn't already known
             if not self.lines.has_key(hashval):
