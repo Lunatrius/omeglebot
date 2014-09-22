@@ -939,7 +939,7 @@ class pyborg:
                         continue
 
                 if w < len(cwords) - 1:
-                    #if the word is in ignore_list, look the next word
+                    # if the word is in ignore_list, look the next word
                     look_for = cwords[w + 1]
                     if look_for in self.settings.ignore_list and w < len(cwords) - 2:
                         look_for = look_for + " " + cwords[w + 2]
@@ -958,7 +958,7 @@ class pyborg:
             for x in xrange(1, len(liste)):
                 numbers.append(liste[x][1] + numbers[x - 1])
 
-            #take one them from the list ( randomly )
+            # take one them from the list ( randomly )
             mot = randint(0, numbers[len(numbers) - 1])
             for x in xrange(0, len(numbers)):
                 if mot <= numbers[x]:
@@ -988,8 +988,8 @@ class pyborg:
         # Insert space between each words
         map((lambda x: sentence.insert(1 + x * 2, " ") ), xrange(0, len(sentence) - 1))
 
-        #correct the ' & , spaces problem
-        #code is not very good and can be improve but does his job...
+        # correct the ' & , spaces problem
+        # code is not very good and can be improve but does his job...
         for x in xrange(0, len(sentence)):
             if sentence[x] == "'":
                 sentence[x - 1] = ""
@@ -997,7 +997,7 @@ class pyborg:
             if sentence[x] == ",":
                 sentence[x - 1] = ""
 
-        #return as string..
+        # return as string..
         return "".join(sentence)
 
     def learn(self, body, num_context=1):
@@ -1017,7 +1017,7 @@ class pyborg:
             if len(words) < 1:
                 return
 
-            voyelles = "aÃ Ã¢eÃ©Ã¨ÃªiÃ®Ã¯oÃ¶Ã´uÃ¼Ã»y"
+            voyelles = "aàâeéèêiîïoöôuüûy"
             for x in xrange(0, len(words)):
 
                 nb_voy = 0

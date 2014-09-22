@@ -1,15 +1,17 @@
 #!/usr/bin/env python2
+import ConfigParser
+from datetime import datetime
+from threading import Thread, Lock
+from Queue import Queue
+from time import sleep
+import time
+import traceback
+
 from irc import Irc
 from omegle import Omegle
 from pyborg import pyborg
 import pyborg as pyborgmodule
-import ConfigParser
-from datetime import datetime, date, time
-import threading
-from threading import Thread, Lock
-from Queue import Queue
-from time import sleep
-import traceback
+
 
 config = ConfigParser.RawConfigParser()
 omegle = Omegle()
@@ -18,6 +20,11 @@ irc = Irc()
 pyborg = pyborg()
 pyborg_queue = Queue()
 pyborg_on = False
+log_path = None
+irc_log = None
+log_index = None
+omegle_channel = None
+status_color = None
 
 
 class emptyclass:
@@ -77,19 +84,19 @@ def main():
     global pyborg_thread
     pyborg_thread = Thread(target=run_pyborg_thread)
     pyborg_thread.setDaemon(True)
-    pyborg_thread.start();
+    pyborg_thread.start()
 
     while irc_thread.isAlive():
         sleep(60)
 
 
 def run_irc_thread():
-    irc.connect('irc.esper.net', 6667)
+    irc.connect(config.get('IRC', 'server'), 6667)
 
 
 def run_pyborg_thread():
     while True:
-        msg = pyborg_queue.get();
+        msg = pyborg_queue.get()
         io_module = emptyclass()
         io_module.output = pyborg_omegle_output
         try:
@@ -136,6 +143,8 @@ def channel_msg(sender, channel, msg):
             if user_allowed(irc.users[channel][user]):
                 if omegle.status == 'connected':
                     omegle.disconnect()
+                    while omegle.status != 'disconnected':
+                        time.sleep(1)
                 omegle.connect()
             else:
                 irc.notice(user, 'ACCESS DENIED FGT')
@@ -236,10 +245,10 @@ def omegle_disconnected(msg=''):
 
 def omegle_msg(msg):
     print repr(msg)
-    irc.msg(omegle_channel, msg_color + msg)
+    irc.msg(omegle_channel, msg_color + msg.replace('\r\n', ' | ').replace('\r', ' | ').replace('\n', ' | '))
 
     if pyborg_on:
-        pyborg_queue.put(msg);
+        pyborg_queue.put(msg)
 
     if omegle.status == 'connected':
         omegle_log.write('Stranger: ' + msg + '\n')
@@ -274,7 +283,7 @@ def omegle_error(msg):
 
 def irc_output(channel, text):
     print text
-    if omegle.status == 'connected' and channel == omegle_channel:
+    if omegle.status == 'connected' and channel == omegle_channel and irc_log:
         irc_log.write(datetime.utcnow().strftime(timestamp_format) + ' ' + text + '\n')
 
 
@@ -282,7 +291,7 @@ def irc_output(channel, text):
 # is user allowed to talk to the omegler
 def user_allowed(modes):
     if allow == 'all':
-        return True;
+        return True
     elif allow == 'voice':
         return '+' in modes or '@' in modes
     elif allow == 'op':

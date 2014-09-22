@@ -1,5 +1,5 @@
 import socket
-import sys
+
 from event import Event
 
 
