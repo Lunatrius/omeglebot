@@ -119,7 +119,7 @@ class cfgset:
 
         # try to load saved ones
         vars = _load_config(filename)
-        if vars == None:
+        if vars is None:
             # none found. this is new
             self.save()
             return
@@ -135,7 +135,7 @@ class cfgset:
             # reserved
             if i == "_defaults" or i == "_filename":
                 continue
-            if self._defaults.has_key(i):
+            if i in self._defaults:
                 comment = self._defaults[i][0]
             else:
                 comment = ""

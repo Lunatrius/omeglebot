@@ -152,7 +152,7 @@ class Irc:
             if msg == 'NICK':
                 user = sender[0:sender.find('!')]
                 for channel in self.channels:
-                    if self.users[channel].has_key(user):
+                    if user in self.users[channel]:
                         self.users[channel][params[0]] = self.users[channel][user]
                         del self.users[channel][user]
                         self.on_output.call(channel, '%s is now known as %s' % (user, params[0]))
@@ -171,7 +171,7 @@ class Irc:
             if msg == 'QUIT':
                 user = sender[0:sender.find('!')]
                 for channel in self.channels:
-                    if self.users[channel].has_key(user):
+                    if user in self.users[channel]:
                         del self.users[channel][user]
                         if len(params) == 1:
                             self.on_output.call(channel, '%s has left %s (%s)' % (user, channel, params[0]))
@@ -189,7 +189,7 @@ class Irc:
                     self.on_private_msg.call(sender, params[1])
 
     def get_mode_char(self, user, channel):
-        if self.users[channel].has_key(user):
+        if user in self.users[channel]:
             if '@' in self.users[channel][user]:
                 return '@'
             if '+' in self.users[channel][user]:
@@ -208,7 +208,6 @@ class Irc:
             self.on_output.call(dest, '<%s%s> %s' % (self.get_mode_char(self.nick, dest), self.nick, msg))
         else:
             self.on_output.call('server', '<%s> -> <%s> %s' % (self.nick, dest, msg))
-
 
     def notice(self, dest, msg):
         self.send_raw('NOTICE %s :%s' % (dest, msg))

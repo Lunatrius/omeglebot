@@ -47,7 +47,7 @@ class Omegle:
                 # if we receive nothing then we probably got disconnected
                 c = self.sock.recv(1)
                 if c == '':  # if we got nothing then we probably disconnected earlier
-                    self.sock = 0;
+                    self.sock = 0
                     self.on_disconnected.call()
                     self.status = 'disconnected'
                     return
@@ -71,7 +71,7 @@ class Omegle:
                     self.on_msg.call(msg)
                 elif opcode == 'd':  # stranger disconnected
                     self.sock.close()
-                    self.sock = 0;
+                    self.sock = 0
                     self.on_disconnected.call('strangerDisconnected')
                     self.status = 'disconnected'
                     return

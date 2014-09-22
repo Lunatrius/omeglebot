@@ -43,7 +43,6 @@ def filter_message(message, bot):
     and converting to lower case.
     """
 
-
     # to lowercase
     message = message.lower()
 
@@ -131,23 +130,23 @@ class pyborg:
         """
         # Attempt to load settings
         self.settings = self.cfgfile.cfgset()
-        self.settings.load("pyborg.cfg",
-                           {"num_contexts": ("Total word contexts", 0),
-                            "num_words": ("Total unique words known", 0),
-                            "max_words": ("max limits in the number of words known", 6000),
-                            "learning": ("Allow the bot to learn", 1),
-                            "ignore_list": ("Words that can be ignored for the answer", ['!.', '?.', "'", ',', ';']),
-                            "censored": ("Don't learn the sentence if one of those words is found", []),
-                            "num_aliases": ("Total of aliases known", 0),
-                            "aliases": ("A list of similars words", {}),
-                            "process_with": ("Wich way for generate the reply ( pyborg|megahal)", "pyborg"),
-                            "no_save": ("If True, Pyborg don't saves the dictionary and configuration on disk", "False")
-                           })
+        self.settings.load("pyborg.cfg", {
+            "num_contexts": ("Total word contexts", 0),
+            "num_words": ("Total unique words known", 0),
+            "max_words": ("max limits in the number of words known", 6000),
+            "learning": ("Allow the bot to learn", 1),
+            "ignore_list": ("Words that can be ignored for the answer", ['!.', '?.', "'", ',', ';']),
+            "censored": ("Don't learn the sentence if one of those words is found", []),
+            "num_aliases": ("Total of aliases known", 0),
+            "aliases": ("A list of similars words", {}),
+            "process_with": ("Wich way for generate the reply ( pyborg|megahal)", "pyborg"),
+            "no_save": ("If True, Pyborg don't saves the dictionary and configuration on disk", "False")
+        })
 
         self.answers = self.cfgfile.cfgset()
-        self.answers.load("answers.txt",
-                          {"sentences": ("A list of prepared answers", {})
-                          })
+        self.answers.load("answers.txt", {
+            "sentences": ("A list of prepared answers", {})
+        })
         self.unfilterd = {}
 
         # Read the dictionary
@@ -224,7 +223,6 @@ class pyborg:
                         self.unlearn(x)
                         print "unlearned aliases %s" % x
 
-
             # unlearn words in the unlearn.txt file.
             try:
                 f = open("unlearn.txt", "r")
@@ -232,7 +230,7 @@ class pyborg:
                     word = f.readline().strip('\n')
                     if word == "":
                         break
-                    if self.words.has_key(word):
+                    if word in self.words:
                         self.unlearn(word)
                 f.close()
             except (EOFError, IOError), e:
@@ -240,7 +238,6 @@ class pyborg:
                 pass
 
         self.settings.save()
-
 
     def save_all(self):
         if self.settings.process_with == "pyborg" and self.settings.no_save != "True":
@@ -270,7 +267,6 @@ class pyborg:
             f.write(self.saves_version)
             f.close()
 
-
             # zip the files
             f = zipfile.ZipFile('archive.zip', 'w', zipfile.ZIP_DEFLATED)
             f.write('words.dat')
@@ -292,7 +288,7 @@ class pyborg:
             for key in self.words.keys():
                 wordlist.append([key, len(self.words[key])])
             wordlist.sort(lambda x, y: cmp(x[1], y[1]))
-            map((lambda x: f.write(str(x[0]) + "\n\r") ), wordlist)
+            map((lambda x: f.write(str(x[0]) + "\n\r")), wordlist)
             f.close()
 
             f = open("sentences.txt", "w")
@@ -302,9 +298,8 @@ class pyborg:
             for key in self.unfilterd.keys():
                 wordlist.append([key, self.unfilterd[key]])
             wordlist.sort(lambda x, y: cmp(y[1], x[1]))
-            map((lambda x: f.write(str(x[0]) + "\n") ), wordlist)
+            map((lambda x: f.write(str(x[0]) + "\n")), wordlist)
             f.close()
-
 
             # Save settings
             self.settings.save()
@@ -316,7 +311,8 @@ class pyborg:
         """
 
         try:
-            if self.settings.process_with == "megahal": import mh_python
+            if self.settings.process_with == "megahal":
+                import mh_python
         except:
             self.settings.process_with = "pyborg"
             self.settings.save()
@@ -340,7 +336,6 @@ class pyborg:
                 self.learn(body)
             elif self.settings.process_with == "megahal" and self.settings.learning == 1:
                 mh_python.learn(body)
-
 
         # Make a reply if desired
         if randint(0, 99) < replyrate:
@@ -373,7 +368,8 @@ class pyborg:
             if message == "":
                 return
             # else output
-            if owner == 0: time.sleep(.2 * len(message))
+            if owner == 0:
+                time.sleep(.2 * len(message))
             io_module.output(message, args)
 
     def do_commands(self, io_module, body, args, owner):
@@ -407,7 +403,7 @@ class pyborg:
             if len(command_list) == 2:
                 # single word specified
                 word = command_list[1].lower()
-                if self.words.has_key(word):
+                if word in self.words:
                     c = len(self.words[word])
                     msg = "%s is known (%d contexts)" % (word, c)
                 else:
@@ -419,7 +415,7 @@ class pyborg:
                     words.append(x.lower())
                 msg = "Number of contexts: "
                 for x in words:
-                    if self.words.has_key(x):
+                    if x in self.words:
                         c = len(self.words[x])
                         msg += x + "/" + str(c) + " "
                     else:
@@ -463,7 +459,6 @@ class pyborg:
                     self.settings.max_words = limit
                     msg += "now " + command_list[1]
 
-
             # Check for broken links in the dictionary
             elif command_list[0] == "!checkdict" and self.settings.process_with == "pyborg":
                 t = time.time()
@@ -476,7 +471,7 @@ class pyborg:
                         line_idx, word_num = struct.unpack("iH", wlist[i])
 
                         # Nasty critical error we should fix
-                        if not self.lines.has_key(line_idx):
+                        if not line_idx in self.lines:
                             print "Removing broken link '%s' -> %d" % (w, line_idx)
                             num_broken = num_broken + 1
                             del wlist[i]
@@ -549,10 +544,9 @@ class pyborg:
                         if c.isdigit():
                             digit += 1
 
-
-                            # Compte les mots inferieurs a cette limite
+                    # Compte les mots inferieurs a cette limite
                     c = len(self.words[w])
-                    if c < 2 or ( digit and char ):
+                    if c < 2 or (digit and char):
                         liste.append(w)
                         compteur += 1
                         if compteur == c_max:
@@ -615,7 +609,7 @@ class pyborg:
                 if len(c) == 5:
                     return
                 if len(c) > 10:
-                    io_module.output("...(" + `len(c) - 10` + " skipped)...", args)
+                    io_module.output("...(" + repr(len(c) - 10) + " skipped)...", args)
                 x = len(c) - 5
                 if x < 5:
                     x = 5
@@ -695,16 +689,18 @@ class pyborg:
                               % ", ".join(self.settings.aliases.keys())
                 # add every word listed to alias list
                 elif len(command_list) == 2:
-                    if command_list[1][0] != '~': command_list[1] = '~' + command_list[1]
+                    if command_list[1][0] != '~':
+                        command_list[1] = '~' + command_list[1]
                     if command_list[1] in self.settings.aliases.keys():
                         msg = "Thoses words : %s  are aliases to %s" \
-                              % ( " ".join(self.settings.aliases[command_list[1]]), command_list[1] )
+                              % (" ".join(self.settings.aliases[command_list[1]]), command_list[1])
                     else:
                         msg = "The alias %s is not known" % command_list[1][1:]
                 elif len(command_list) > 2:
                     # create the aliases
                     msg = "The words : "
-                    if command_list[1][0] != '~': command_list[1] = '~' + command_list[1]
+                    if command_list[1][0] != '~':
+                        command_list[1] = '~' + command_list[1]
                     if not (command_list[1] in self.settings.aliases.keys()):
                         self.settings.aliases[command_list[1]] = [command_list[1][1:]]
                         self.replace(command_list[1][1:], command_list[1])
@@ -746,7 +742,7 @@ class pyborg:
             number = self.lines[l][1]
             if line[w] != old:
                 # fucked dictionary
-                print "Broken link: %s %s" % (x, self.lines[l][0] )
+                print "Broken link: %s %s" % (x, self.lines[l][0])
                 continue
             else:
                 line[w] = new
@@ -754,13 +750,13 @@ class pyborg:
                 self.lines[l][1] += number
                 changed += 1
 
-        if self.words.has_key(new):
+        if new in self.words:
             self.settings.num_words -= 1
             self.words[new].extend(self.words[old])
         else:
             self.words[new] = self.words[old]
         del self.words[old]
-        return "%d instances of %s replaced with %s" % ( changed, old, new )
+        return "%d instances of %s replaced with %s" % (changed, old, new)
 
     def unlearn(self, context):
         """
@@ -828,7 +824,7 @@ class pyborg:
         # The word has to bee seen in already 3 contexts differents for being choosen
         known_min = 3
         for x in xrange(0, len(words)):
-            if self.words.has_key(words[x]):
+            if words[x] in self.words:
                 k = len(self.words[words[x]])
             else:
                 continue
@@ -872,12 +868,10 @@ class pyborg:
                         look_for = cwords[w - 2] + " " + look_for
 
                     # saves how many times we can found each word
-                    if not (pre_words.has_key(look_for)):
+                    if not (look_for in pre_words):
                         pre_words[look_for] = num_context
                     else:
                         pre_words[look_for] += num_context
-
-
                 else:
                     pre_words[""] += num_context
 
@@ -908,7 +902,7 @@ class pyborg:
             if mot == ['']:
                 done = 1
             else:
-                map((lambda x: sentence.insert(0, x) ), mot)
+                map((lambda x: sentence.insert(0, x)), mot)
 
         pre_words = sentence
         sentence = sentence[-2:]
@@ -921,7 +915,6 @@ class pyborg:
 
         # we are looking, for a cwords[w] known, and maybe a cwords[w-1] known, what will be the cwords[w+1] to choose.
         # cwords[w+2] is need when cwords[w+1] is in ignored list
-
 
         done = 0
         while done == 0:
@@ -944,7 +937,7 @@ class pyborg:
                     if look_for in self.settings.ignore_list and w < len(cwords) - 2:
                         look_for = look_for + " " + cwords[w + 2]
 
-                    if not (post_words.has_key(look_for)):
+                    if not look_for in post_words:
                         post_words[look_for] = num_context
                     else:
                         post_words[look_for] += num_context
@@ -977,16 +970,17 @@ class pyborg:
             if mot == ['']:
                 done = 1
             else:
-                map((lambda x: sentence.append(x) ), mot)
+                map((lambda x: sentence.append(x)), mot)
 
         sentence = pre_words[:-2] + sentence
 
         # Replace aliases
         for x in xrange(0, len(sentence)):
-            if sentence[x][0] == "~": sentence[x] = sentence[x][1:]
+            if sentence[x][0] == "~":
+                sentence[x] = sentence[x][1:]
 
         # Insert space between each words
-        map((lambda x: sentence.insert(1 + x * 2, " ") ), xrange(0, len(sentence) - 1))
+        map((lambda x: sentence.insert(1 + x * 2, " ")), xrange(0, len(sentence) - 1))
 
         # correct the ' & , spaces problem
         # code is not very good and can be improve but does his job...
@@ -1038,9 +1032,9 @@ class pyborg:
                         return
 
                 if len(words[x]) > 13 \
-                        or ( ((nb_voy * 100) / len(words[x]) < 26) and len(words[x]) > 5 ) \
-                        or ( char and digit ) \
-                        or ( self.words.has_key(words[x]) == 0 and self.settings.learning == 0 ):
+                        or (((nb_voy * 100) / len(words[x]) < 26) and len(words[x]) > 5) \
+                        or (char and digit) \
+                        or ((words[x] in self.words) == 0 and self.settings.learning == 0):
                     # if one word as more than 13 characters, don't learn
                     # ( in french, this represent 12% of the words )
                     # and d'ont learn words where there are less than 25% of voyels
@@ -1063,13 +1057,13 @@ class pyborg:
             hashval = hash(cleanbody) & ((1 << 30) - 1)
 
             # Check context isn't already known
-            if not self.lines.has_key(hashval):
+            if not hashval in self.lines:
                 if not (num_cpw > 100 and self.settings.learning == 0):
 
                     self.lines[hashval] = [cleanbody, num_context]
                     # Add link for each word
                     for x in xrange(0, len(words)):
-                        if self.words.has_key(words[x]):
+                        if words[x] in self.words:
                             # Add entry. (line number, word number)
                             self.words[words[x]].append(struct.pack("iH", hashval, x))
                         else:
@@ -1080,7 +1074,8 @@ class pyborg:
                 self.lines[hashval][1] += num_context
 
             # is max_words reached, don't learn more
-            if self.settings.num_words >= self.settings.max_words: self.settings.learning = 0
+            if self.settings.num_words >= self.settings.max_words:
+                self.settings.learning = 0
 
         # Split body text into sentences and parse them
         # one by one.
