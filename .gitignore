@@ -1,2 +1,8 @@
+# IDE stuff
+.idea/
+
+# python
 *.pyc
+
+# config
 *.cfg
