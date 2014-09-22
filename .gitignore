@@ -6,3 +6,7 @@
 
 # config
 *.cfg
+
+# misc
+logindex
+import/
