@@ -124,6 +124,14 @@ def private_msg(sender, msg):
         irc.send_raw(msg)
 
 
+def perm(s):
+    l = [s]
+    for i in range(0, len(s) + 1):
+        if len(s[:-i]) > 0:
+            l.append(s[:-i])
+    return l
+
+
 def channel_msg(sender, channel, msg):
     global pyborg_on
     user = sender[0:sender.find('!')]
@@ -153,7 +161,7 @@ def channel_msg(sender, channel, msg):
                 irc.notice(user, 'Omegle operator commands: !allow all|voice|op, !quit, !pyborg on|off')
             else:
                 irc.notice(user, '!connect connects to omegle, !disconnect disconnects the current omegle conversation. Channel messages prefixed with \'>\' are sent to the stranger. Only voiced users may use these commands')
-        elif msg[0] == '>':
+        elif msg[0] == '>' and len(msg) > 1 and not msg in perm('>status') + perm('>leaderboards'):
             if user_allowed(irc.users[channel][user]):
                 if omegle.status == 'connected':
                     omegle_log.write('You: ' + msg[1:] + '\n')
@@ -163,7 +171,7 @@ def channel_msg(sender, channel, msg):
                     irc.notice(user, 'Omegle chat is disconnected!')
             else:
                 irc.notice(user, 'ACCESS DENIED')
-        elif msg[0] == '^':
+        elif msg[0] == '^' and len(msg) > 1:
             if user_allowed(irc.users[channel][user]):
                 if omegle.status == 'connected':
                     # omegle_log.write('You: ' + msg[1:] + '\n')
