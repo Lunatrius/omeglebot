@@ -16,7 +16,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -708,6 +708,7 @@ class pyborg:
                     for x in xrange(2, len(command_list)):
                         msg += "%s " % command_list[x]
                         self.settings.aliases[command_list[1]].append(command_list[x])
+                        self.settings.aliases[command_list[1]] = list(set(self.settings.aliases[command_list[1]]))
                         # replace each words by his alias
                         self.replace(command_list[x], command_list[1])
                     msg += "have been aliases to %s" % command_list[1]
