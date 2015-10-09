@@ -1,3 +1,7 @@
+import ast
+import urllib
+import urllib2
+
 import socket
 import thread
 import traceback
@@ -21,81 +25,92 @@ class Event:
 
 
 class Omegle:
-    server = 'omegle.com'
-    port = 1365
     status = 'disconnected'  # disconnected, connecting, connected, disconnected
 
     on_connected = Event()
     on_disconnected = Event()
     on_msg = Event()
     on_error = Event()
-    sock = None
+    strangerID = None
+
+    def send(self, page, message):
+        req = urllib2.Request('http://omegle.com/' + page, urllib.urlencode(message))
+        response = urllib2.urlopen(req)
+        return response.read()
+
+    def get_event(self):
+        response = self.send('events', {'id': self.strangerID}).decode()
+        if response == 'null':
+            return []
+
+        return ast.literal_eval(response)
+
+    def start_session(self):
+        response = self.send('start', {"rcs": 1})
+        return response[1:-1].decode()
 
     def connect(self):
-        if self.status == 'disconnected' and self.sock is None:
+        if self.status == 'disconnected' and self.strangerID is None:
             self.status = 'connecting'
-            thread.start_new_thread(self.event_loop, ())
+            self.strangerID = self.start_session()
+
+            if self.strangerID == '':
+                self.status = 'disconnected'
+                self.on_disconnected.call('invalidSession')
+                self.strangerID = None
+            else:
+                thread.start_new_thread(self.event_loop, ())
 
     def event_loop(self):
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((self.server, self.port))
-            self.sock.send('\x0BomegleStart\x00\x15web-flash?rcs=1&spid=')
-
-            while True:
-                # firstly try to receive one byte
-                # if we receive nothing then we probably got disconnected
-                c = self.sock.recv(1)
-                if c == '':  # if we got nothing then we probably disconnected earlier
-                    self.sock = None
-                    self.on_disconnected.call()
-                    self.status = 'disconnected'
-                    return
-                # read opcode length
-                len = ord(c)
-                # read the opcode
-                opcode = ''
-                for i in range(0, len):
-                    opcode += self.sock.recv(1)
-                # read the message length
-                len = ord(self.sock.recv(1)) << 8 | ord(self.sock.recv(1))
-                # read the message
-                msg = ''
-                for i in range(0, len):
-                    msg += self.sock.recv(1)
-                print opcode + ' ' + msg
-                if opcode == 'c':  # connected
-                    self.status = 'connected'
-                    self.on_connected.call()
-                elif opcode == 'm':  # message
-                    self.on_msg.call(msg)
-                elif opcode == 'd':  # stranger disconnected
-                    self.sock.close()
-                    self.sock = None
-                    self.on_disconnected.call('strangerDisconnected')
-                    self.status = 'disconnected'
-                    return
-                    # other not yet implemented opcodes
-                    # 't' == typing
-                    # 'st' == stopped typing
-                    # 'recaptchaRequired' == recaptcha is required
+            bot = False
+            typing = False
+            while self.strangerID is not None:
+                events = self.get_event()
+                for event in events:
+                    if event[0] == 'connected':
+                        self.status = 'connected'
+                        self.on_connected.call()
+                    elif event[0] == 'gotMessage':
+                        if not bot and not typing:
+                            self.on_msg.call('*status: possibly a bot')
+                            bot = True
+                        self.on_msg.call(event[1].replace('\\/', '/'))
+                    elif event[0] == 'antinudeBanned':
+                        self.strangerID = None
+                        self.on_disconnected.call('antinudeBanned (%s)' % (event[1].replace('\\/', '/')))
+                        self.status = 'disconnected'
+                    elif event[0] == 'strangerDisconnected':
+                        self.strangerID = None
+                        self.on_disconnected.call('strangerDisconnected')
+                        self.status = 'disconnected'
+                    elif event[0] == 'typing' and not typing:
+                        self.on_msg.call('*status: appears to be a human')
+                        typing = True
+                    elif event[0] in ['waiting', 'typing', 'stoppedTyping', 'statusInfo', 'identDigests']:
+                        print(('EVENT', event))
+                    else:
+                        self.on_error.call('%s: %s' % (event[0], event[1] if len(event) >= 2 else 'N/A'))
         except:
             self.on_error.call(traceback.format_exc())
             self.on_disconnected.call('Error')
             self.status = 'disconnected'
 
     def msg(self, msg):
-        if self.status == 'connected' and self.sock is not None:
+        if self.status == 'connected' and self.strangerID is not None:
             try:
-                self.sock.send('\x01s' + chr(len(msg) >> 8) + chr(len(msg) & 0xFF) + msg)
+                self.send('send', {'msg': msg, 'id': self.strangerID})
             except:
                 self.on_error.call(traceback.format_exc())
 
     def disconnect(self):
-        if self.status == 'connected' and self.sock is not None:
+        if self.status == 'connected' and self.strangerID is not None:
             # self.status = 'disconnected'
             try:
                 # send a disconnect packet and just wait for the event loop to die due to disconnection
-                self.sock.send('\x01d\x00\x00')
+                self.send('disconnect', {'id': self.strangerID})
+                self.strangerID = None
+                self.status = 'disconnected'
+                self.on_disconnected.call()
             except:
                 self.on_error.call(traceback.format_exc())
