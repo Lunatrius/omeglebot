@@ -252,7 +252,6 @@ def omegle_disconnected(msg=''):
 
 
 def omegle_msg(msg):
-    print repr(msg)
     irc.msg(omegle_channel, msg_color + msg.replace('\r\n', ' | ').replace('\r', ' | ').replace('\n', ' | '))
 
     if pyborg_on:

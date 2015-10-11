@@ -197,7 +197,7 @@ class Irc:
         return ''
 
     def send_raw(self, msg):
-        self.sock.send(msg + '\r\n')
+        self.sock.send((msg + '\r\n').encode('utf-8'))
 
     def join(self, channel, passwd=''):
         self.send_raw('JOIN %s %s' % (channel, passwd))

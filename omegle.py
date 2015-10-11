@@ -1,4 +1,4 @@
-import ast
+import json
 import urllib
 import urllib2
 
@@ -36,18 +36,26 @@ class Omegle:
     def send(self, page, message):
         req = urllib2.Request('http://omegle.com/' + page, urllib.urlencode(message))
         response = urllib2.urlopen(req)
-        return response.read()
+        content = response.read()
 
-    def get_event(self):
-        response = self.send('events', {'id': self.strangerID}).decode()
-        if response == 'null':
+        if content == 'win':
             return []
 
-        return ast.literal_eval(response)
+        try:
+            return json.loads(content)
+        except Exception as e:
+            print(['something broke', content, e])
+            return []
+
+    def get_event(self):
+        response = self.send('events', {'id': self.strangerID})
+        if type(response) != list:
+            return []
+
+        return response
 
     def start_session(self):
-        response = self.send('start', {"rcs": 1})
-        return response[1:-1].decode()
+        return self.send('start', {"rcs": 1})
 
     def connect(self):
         if self.status == 'disconnected' and self.strangerID is None:
