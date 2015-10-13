@@ -37,7 +37,10 @@ class emptyclass:
 
 def my_print(*args):
     message = ' '.join([str(arg) for arg in args])
-    print message.encode(__encoding__, errors='replace').decode(__encoding__)
+    try:
+        print message.encode(__encoding__, errors='replace').decode(__encoding__)
+    except:
+        pass
 
 
 def main():
