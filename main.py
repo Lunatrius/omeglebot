@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import sys
 import ConfigParser
 from datetime import datetime
 from threading import Thread, Lock
@@ -27,8 +28,16 @@ omegle_channel = None
 status_color = None
 
 
+__encoding__ = sys.stdout.encoding if sys.stdout.encoding else 'utf-8'
+
+
 class emptyclass:
     pass
+
+
+def my_print(*args):
+    message = ' '.join([str(arg) for arg in args])
+    print message.encode(__encoding__, errors='replace').decode(__encoding__)
 
 
 def main():
@@ -279,7 +288,7 @@ def pyborg_wait():
 
 
 def omegle_error(msg):
-    print msg
+    my_print(msg)
     irc.msg(omegle_channel, status_color + 'Error!')
     '''for line in msg.split('\n'):
         if line != '':
@@ -289,7 +298,7 @@ def omegle_error(msg):
 
 
 def irc_output(channel, text):
-    print text
+    my_print(text)
     if omegle.status == 'connected' and channel == omegle_channel and irc_log:
         irc_log.write(datetime.utcnow().strftime(timestamp_format) + ' ' + text + '\n')
 
